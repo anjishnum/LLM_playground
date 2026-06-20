@@ -114,9 +114,22 @@ def execute_tool(tool_call):
     if type(arguments) == str:
         arguments = json.loads(arguments)
     if tool_name in TOOL:
-        result = TOOL[tool_name](**arguments)
+        try:
+            result = TOOL[tool_name](**arguments)
+        except Exception as e:
+            print(f"Error occurred while executing tool {tool_name}: {e}")
+            return {
+                "role": "tool",
+                "content": f"Error occurred while executing tool {tool_name}: {e}",
+                "tool_call_id": tool_id
+            }
     else:
         print(f"Tool {tool_name} not found.")
+        return {
+            "role": "tool",
+            "content": f"Tool {tool_name} not found.",
+            "tool_call_id": tool_id
+        }
     
     return {
         "role": "tool",
@@ -165,7 +178,7 @@ def main():
 
         second_response = ask_model(client, messages)
 
-        print(second_response.content)
+        print(second_response.content if second_response.content else "No content returned from the model after tool execution.")
     
     else:
         print("Model did not call any tools. Final response:")
