@@ -167,22 +167,21 @@ def main():
     # --- ----
 
 
-    # --- Ask the model for a response and handle tool calls; then pass it to 2nd api call to get natural language response ---
-    first_response = ask_model(client, messages)
+    # --- Ask the model for a response and handle tool calls; repeat until no more tool calls ---
+    model_response = ask_model(client, messages)
 
-    if first_response.tool_calls:
-        messages.append(first_response)
-        for tool_call in first_response.tool_calls:
+    while model_response.tool_calls:
+        messages.append(model_response)
+        for tool_call in model_response.tool_calls:
             message_from_tool_call_response = execute_tool(tool_call)
             messages.append(message_from_tool_call_response)
 
-        second_response = ask_model(client, messages)
+        model_response = ask_model(client, messages)
 
-        print(second_response.content if second_response.content else "No content returned from the model after tool execution.")
-    
-    else:
-        print("Model did not call any tools. Final response:")
-        print(first_response.content)
+        if not model_response.tool_calls:
+            print("Model did not call any tools. Final response:")
+            print(model_response.content)
+            break
     # --- ----
 
 
